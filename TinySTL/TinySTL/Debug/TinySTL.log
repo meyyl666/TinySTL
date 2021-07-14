@@ -1,0 +1,5 @@
+﻿  main.cpp
+E:\C++学习\TinySTL\TinySTL\TinySTL\list.h(89,27): error C2760: 语法错误: 意外标记 ";"，应为 "{"
+E:\C++学习\TinySTL\TinySTL\TinySTL\list.h(119): message : 查看对正在编译的 类 模板 实例化“mystl::CDList<T>::iterator”的引用
+E:\C++学习\TinySTL\TinySTL\TinySTL\list.h(124): message : 查看对正在编译的 类 模板 实例化“mystl::CDList<T>”的引用
+E:\C++学习\TinySTL\TinySTL\TinySTL\list.h(89,1): fatal error C1903: 无法从以前的错误中恢复；正在停止编译
