@@ -86,7 +86,7 @@ namespace mystl
 			iterator(Node* pTmp) : pNode(pTmp){}
 		public:
 			
-			iterator() :pNode(NULL);
+			iterator() :pNode(NULL) {}
 			//жиди ++
 			iterator operator++() {
 				pNode = pNode->pNext;

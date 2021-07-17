@@ -581,8 +581,336 @@ namespace mystl {
 		NodePtr xp = nullptr;
 
 		//y != z 说明z有两个非空子节点，此时y指向z右子树的最左节点
+		if (y != z)
+		{
+			z->left->parent = y;
+			y->left = z->left;
 
+			// 如果 y 不是 z 的右子节点，那么 z 的右子节点一定有左孩子
+			if (y != z->right)
+			{ // x 替换 y 的位置
+				xp = y->parent;
+				if (x != nullptr)
+					x->parent = y->parent;
 
+				y->parent->left = x;
+				y->right = z->right;
+				z->right->parent = y;
+			}
+			else
+			{
+				xp = y;
+			}
+
+			// 连接 y 与 z 的父节点 
+			if (root == z)
+				root = y;
+			else if (rb_tree_is_lchild(z))
+				z->parent->left = y;
+			else
+				z->parent->right = y;
+			y->parent = z->parent;
+			mystl::swap(y->color, z->color);
+			y = z;
+		}
+		// y == z 说明 z 至多只有一个孩子
+		else
+		{
+			xp = y->parent;
+			if (x)
+				x->parent = y->parent;
+
+			// 连接 x 与 z 的父节点
+			if (root == z)
+				root = x;
+			else if (rb_tree_is_lchild(z))
+				z->parent->left = x;
+			else
+				z->parent->right = x;
+
+			// 此时 z 有可能是最左节点或最右节点，更新数据
+			if (leftmost == z)
+				leftmost = x == nullptr ? xp : rb_tree_min(x);
+			if (rightmost == z)
+				rightmost = x == nullptr ? xp : rb_tree_max(x);
+		}
+
+		// 此时，y 指向要删除的节点，x 为替代节点，从 x 节点开始调整。
+		// 如果删除的节点为红色，树的性质没有被破坏，否则按照以下情况调整（x 为左子节点为例）：
+		// case 1: 兄弟节点为红色，令父节点为红，兄弟节点为黑，进行左（右）旋，继续处理
+		// case 2: 兄弟节点为黑色，且两个子节点都为黑色或 NIL，令兄弟节点为红，父节点成为当前节点，继续处理
+		// case 3: 兄弟节点为黑色，左子节点为红色或 NIL，右子节点为黑色或 NIL，
+		//         令兄弟节点为红，兄弟节点的左子节点为黑，以兄弟节点为支点右（左）旋，继续处理
+		// case 4: 兄弟节点为黑色，右子节点为红色，令兄弟节点为父节点的颜色，父节点为黑色，兄弟节点的右子节点
+		//         为黑色，以父节点为支点左（右）旋，树的性质调整完成，算法结束
+		if (!rb_tree_is_red(y))
+		{ // x 为黑色时，调整，否则直接将 x 变为黑色即可
+			while (x != root && (x == nullptr || !rb_tree_is_red(x)))
+			{
+				if (x == xp->left)
+				{ // 如果 x 为左子节点
+					auto brother = xp->right;
+					if (rb_tree_is_red(brother))
+					{ // case 1
+						rb_tree_set_black(brother);
+						rb_tree_set_red(xp);
+						rb_tree_rotate_left(xp, root);
+						brother = xp->right;
+					}
+					// case 1 转为为了 case 2、3、4 中的一种
+					if ((brother->left == nullptr || !rb_tree_is_red(brother->left)) &&
+						(brother->right == nullptr || !rb_tree_is_red(brother->right)))
+					{ // case 2
+						rb_tree_set_red(brother);
+						x = xp;
+						xp = xp->parent;
+					}
+					else
+					{
+						if (brother->right == nullptr || !rb_tree_is_red(brother->right))
+						{ // case 3
+							if (brother->left != nullptr)
+								rb_tree_set_black(brother->left);
+							rb_tree_set_red(brother);
+							rb_tree_rotate_right(brother, root);
+							brother = xp->right;
+						}
+						// 转为 case 4
+						brother->color = xp->color;
+						rb_tree_set_black(xp);
+						if (brother->right != nullptr)
+							rb_tree_set_black(brother->right);
+						rb_tree_rotate_left(xp, root);
+						break;
+					}
+				}
+				else  // x 为右子节点，对称处理
+				{
+					auto brother = xp->left;
+					if (rb_tree_is_red(brother))
+					{ // case 1
+						rb_tree_set_black(brother);
+						rb_tree_set_red(xp);
+						rb_tree_rotate_right(xp, root);
+						brother = xp->left;
+					}
+					if ((brother->left == nullptr || !rb_tree_is_red(brother->left)) &&
+						(brother->right == nullptr || !rb_tree_is_red(brother->right)))
+					{ // case 2
+						rb_tree_set_red(brother);
+						x = xp;
+						xp = xp->parent;
+					}
+					else
+					{
+						if (brother->left == nullptr || !rb_tree_is_red(brother->left))
+						{ // case 3
+							if (brother->right != nullptr)
+								rb_tree_set_black(brother->right);
+							rb_tree_set_red(brother);
+							rb_tree_rotate_left(brother, root);
+							brother = xp->left;
+						}
+						// 转为 case 4
+						brother->color = xp->color;
+						rb_tree_set_black(xp);
+						if (brother->left != nullptr)
+							rb_tree_set_black(brother->left);
+						rb_tree_rotate_right(xp, root);
+						break;
+					}
+				}
+			}
+			if (x != nullptr)
+				rb_tree_set_black(x);
+		}
+		return y;
 	}
+
+	// 模板类 rb_tree
+	// 参数一代表数据类型，参数二代表键值比较类型
+	template <class T, class Compare>
+	class rb_tree
+	{
+	public:
+		// rb_tree 的嵌套型别定义 
+
+		typedef rb_tree_traits<T>                        tree_traits;
+		typedef rb_tree_value_traits<T>                  value_traits;
+
+		typedef typename tree_traits::base_type          base_type;
+		typedef typename tree_traits::base_ptr           base_ptr;
+		typedef typename tree_traits::node_type          node_type;
+		typedef typename tree_traits::node_ptr           node_ptr;
+		typedef typename tree_traits::key_type           key_type;
+		typedef typename tree_traits::mapped_type        mapped_type;
+		typedef typename tree_traits::value_type         value_type;
+		typedef Compare                                  key_compare;
+
+		typedef mystl::allocator<T>                      allocator_type;
+		typedef mystl::allocator<T>                      data_allocator;
+		typedef mystl::allocator<base_type>              base_allocator;
+		typedef mystl::allocator<node_type>              node_allocator;
+
+		typedef typename allocator_type::pointer         pointer;
+		typedef typename allocator_type::const_pointer   const_pointer;
+		typedef typename allocator_type::reference       reference;
+		typedef typename allocator_type::const_reference const_reference;
+		typedef typename allocator_type::size_type       size_type;
+		typedef typename allocator_type::difference_type difference_type;
+
+		typedef rb_tree_iterator<T>                      iterator;
+		typedef rb_tree_const_iterator<T>                const_iterator;
+		typedef mystl::reverse_iterator<iterator>        reverse_iterator;
+		typedef mystl::reverse_iterator<const_iterator>  const_reverse_iterator;
+
+		allocator_type get_allocator() const { return node_allocator(); }
+		key_compare    key_comp()      const { return key_comp_; }
+
+	private:
+		// 用以下三个数据表现 rb tree
+		base_ptr    header_;      // 特殊节点，与根节点互为对方的父节点
+		size_type   node_count_;  // 节点数
+		key_compare key_comp_;    // 节点键值比较的准则
+	private:
+		//以下是哪个函数用于取得header的成员
+		base_ptr& root() const { return header_->parent; }
+		base_ptr& leftmost() const { return header_->left; }
+		base_ptr& rightmost() const { return header_->right; }
+	public:
+		//构造  复制  析构函数
+		rb_tree() { rb_tree_init(); }
+		rb_tree(const rb_tree& rhs);
+		rb_tree(const rb_tree&& rhs) noexcept;
+		rb_tree& operator=(const rb_tree& rhs);
+		rb_tree& operator=(rb_tree&& rhs);
+
+		~rb_tree() { clear(); }
+
+
+	public:
+		//迭代器相关操作
+		iterator begin() noexcept { return leftmost(); }//RB树的起点为 最左（最小）节点处
+		const_iterator begin() const noexcept { return leftmost(); }
+		iterator end() noexcept { return header_; }//RB树的终点为header所指处
+		const_iterator end() { return header_; }
+
+		reverse_iterator rbegin() noexcept
+		{
+			return reverse_iterator(end());
+		}
+		const_reverse_iterator rbegin() const noexcept
+		{
+			return const_reverse_iterator(end());
+		}
+		reverse_iterator rend() noexcept
+		{
+			return reverse_iterator(begin());
+		}
+		const_reverse_iterator rend() noexcept
+		{
+			return const_reverse_iterator(begin());
+		}
+
+		const_iterator cbegin() const noexcept
+		{
+			return begin();
+		}
+		const_iterator cend() const noexcept
+		{
+			return end();
+		}
+		const_reverse_iterator crbegin() const noexcept
+		{
+			return rbegin();
+		}
+		const_reverse_iterator crend() const noexcept
+		{
+			return rend();
+		}
+
+		//容量相关操作
+		bool empty()  const noexcept { return node_count_ == 0;}
+		size_type size() const noexcept { return node_count_; }
+		size_type max_size() const noexcept { return static_cast<size_type>(-1); }
+
+		//插入删除相关操作
+		//emplace
+		template <class ...Args>
+		iterator emplace_multi(Args&& ...args);
+
+		template <class ...Args>
+		mystl::pair<iterator, bool> emplace_unique(Args&& ....args);
+
+		template <class ...Args >
+		iterator emplace_multi_use_hint(iterator hint, Args&& ...args);
+
+		template <class ...Args >
+		iterator  emplace_unique_use_hint(iterator hint, Args&& ...args);
+
+
+		//insert
+
+		iterator insert_multi(const value_type& value);
+		iterator insert_multi(value_type&& value)
+		{
+			return emplace_multi(mystl::move(value));
+		}
+		iterator insert_multi(iterator hint, const value_type& value)
+		{
+			return emplace_multi_use_hint(hint, value);
+		}
+		iterator insert_multi(iterator hint, value_type&& value)
+		{
+			return emplace_multi_use_hint(hint, mystl::move(value));
+		}
+
+		template <class InputIterator>
+		void insert_multi(InputIterator first, InputIterator last)
+		{
+			size_type n = mystl::distance(first, last);
+			THROW_LENGTH_ERROR_IF(node_count_ > max_size() - n, "rb_tree<T, Comp>'s size too big");
+			for (; n > 0; --n, ++first)
+				insert_multi(end(), *first);
+		}
+
+		mystl::pair<iterator, bool> insert_unique(const value_type& value);
+		mystl::pair<iterator,bool> insert_unque(value_type&& value)
+		{
+			return emplace_unique(mystl::move(value));
+		}
+		iterator insert_unique(iterator hint, const value_type& value)
+		{
+			return emplace_unique_use_hint(hint, value);
+		}
+		iterator insert_unique(iterator hint, value_type&& value)
+		{
+			return emplace_unique_use_hint(hint, value);
+		}
+
+		template <class InputIterator>
+		void insert_unique(InputIterator first, InputIterator last)
+		{
+			size_type n = mystl::distance(first, last);
+			THROW_LENGTH_ERROR_IF(node_count_ > max_size() - n, "rb_tree<T, Comp>'s size too big");
+			for (; n > 0; --n, ++first)
+				insert_unique(end(), *first);
+		}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	};
 
 }
