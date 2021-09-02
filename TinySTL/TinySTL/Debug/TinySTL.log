@@ -1,5 +1,7 @@
 ﻿  main.cpp
-E:\C++学习\TinySTL\TinySTL\TinySTL\list.h(89,27): error C2760: 语法错误: 意外标记 ";"，应为 "{"
-E:\C++学习\TinySTL\TinySTL\TinySTL\list.h(118): message : 查看对正在编译的 类 模板 实例化“mystl::CDList<T>::iterator”的引用
+E:\C++学习\TinySTL\TinySTL\TinySTL\list.h(103,4): error C2760: 语法错误: 意外标记 "}"，应为 ";"
 E:\C++学习\TinySTL\TinySTL\TinySTL\list.h(123): message : 查看对正在编译的 类 模板 实例化“mystl::CDList<T>”的引用
-E:\C++学习\TinySTL\TinySTL\TinySTL\list.h(89,1): fatal error C1903: 无法从以前的错误中恢复；正在停止编译
+E:\C++学习\TinySTL\TinySTL\TinySTL\main.cpp(30,18): error C2039: "begin": 不是 "mystl::CDList<int>" 的成员
+E:\C++学习\TinySTL\TinySTL\TinySTL\main.cpp(12): message : 参见“mystl::CDList<int>”的声明
+E:\C++学习\TinySTL\TinySTL\TinySTL\main.cpp(30,39): error C2039: "end": 不是 "mystl::CDList<int>" 的成员
+E:\C++学习\TinySTL\TinySTL\TinySTL\main.cpp(12): message : 参见“mystl::CDList<int>”的声明
